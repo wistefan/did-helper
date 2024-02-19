@@ -26,7 +26,7 @@ func GetDIDKeyFromECPKCS12(path, password string) (did string, err error) {
 		return did, err
 	}
 
-	ecKey, ok := privateKey.(ecdsa.PrivateKey)
+	ecKey, ok := privateKey.(*ecdsa.PrivateKey)
 	if !ok {
 		zap.L().Sugar().Warnf("Keystore %s does not contain a valid EC Private Key.", path)
 		return did, errors.New("no_ec_private_key")
