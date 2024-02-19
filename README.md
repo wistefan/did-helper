@@ -18,3 +18,13 @@ openssl pkcs12 -export -inkey private-key.pem -in cert.pem -out cert.pfx -name t
 # check the contents
 keytool -v -keystore cert.pfx -list -alias the-alias
 ```
+
+## Get the did
+
+To generate a did from the generated keystore:
+
+> :warning: Currently, only P-256 keys are supported.
+
+```shell
+    ./did-helper -keystorePath ./example/cert.pfx -keystorePassword=password
+``` 
