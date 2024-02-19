@@ -26,5 +26,7 @@ To generate a did from the generated keystore:
 > :warning: Currently, only P-256 keys are supported.
 
 ```shell
+    wget https://github.com/wistefan/did-helper/releases/download/0.0.2/did-helper
+    chmod +x did-helper
     ./did-helper -keystorePath ./example/cert.pfx -keystorePassword=password
 ``` 
