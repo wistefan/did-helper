@@ -32,3 +32,6 @@ To generate a did from the generated keystore:
 ``` 
 
 Alternatively, you could use the container:
+```shell 
+    docker run -v $(pwd):/cert quay.io/wi_stefan/did-helper
+```
