@@ -30,3 +30,5 @@ To generate a did from the generated keystore:
     chmod +x did-helper
     ./did-helper -keystorePath ./example/cert.pfx -keystorePassword=password
 ``` 
+
+Alternatively, you could use the container:
