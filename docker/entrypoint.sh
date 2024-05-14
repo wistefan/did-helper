@@ -8,4 +8,4 @@ openssl req -new -x509 -key private-key.pem -out cert.pem -days 360 -subj "/C=${
 openssl pkcs12 -export -inkey private-key.pem -in cert.pem -out cert.pfx -name ${KEY_ALIAS} -password pass:${STORE_PASS}
 
 cd /temp
-/did-helper/did-helper -keystorePath /cert/cert.pfx -keystorePassword=${STORE_PASS} -outputFile /cert/did.json
+/did-helper/did-helper -keystorePath /cert/cert.pfx -keystorePassword ${STORE_PASS} -outputFile ${OUTPUT_FILE} -outputFormat ${OUTPUT_FORMAT}

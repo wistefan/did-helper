@@ -15,6 +15,8 @@ ENV ORGANIZATION="FIWARE Foundation e.V."
 ENV COMMON_NAME="www.fiware.org"
 ENV STORE_PASS="myPassword"
 ENV KEY_ALIAS="myAlias"
+ENV OUTPUT_FORMAT="json"
+ENV OUTPUT_FILE="/cert/did.json"
 
 
 RUN apt-get update
