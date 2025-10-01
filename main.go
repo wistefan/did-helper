@@ -20,12 +20,14 @@ func main() {
 	var outputFile string
 	var outputFormat string
 	var didType string
+	var keyType string
 
 	flag.StringVar(&path, "keystorePath", "", "Path to the keystore to be read.")
 	flag.StringVar(&password, "keystorePassword", "", "Password for the keystore.")
 	flag.StringVar(&outputFormat, "outputFormat", "json", "Output format for the did result file. Can be json or env.")
 	flag.StringVar(&outputFile, "outputFile", "", "File to write the did, format depends on the requested format. Will not write the file if empty.")
-	flag.StringVar(&didType, "didType", "key", "Type of the did to generate. did:key and did:jwk are supported. Default is did:key")
+	flag.StringVar(&didType, "didType", "key", "Type of the did to generate. did:key and did:jwk are supported.")
+	flag.StringVar(&keyType, "keyType", "P-256", "Type of the did-key to be created. Supported ED-25519, P-256, P-384.")
 
 	flag.Parse()
 
@@ -34,11 +36,12 @@ func main() {
 	var resultingDid string
 	var err error
 
-	if didType == "key" {
-		resultingDid, err = did.GetDIDKeyFromECPKCS12(path, password)
-	} else if didType == "jwk" {
+	switch didType {
+	case "key":
+		resultingDid, err = did.GetDIDKeyFromECPKCS12(path, password, keyType)
+	case "jwk":
 		resultingDid, err = did.GetDIDJWKFromKey(path, password)
-	} else {
+	default:
 		zap.L().Sugar().Warnf("Did type %s is not supported.", didType)
 	}
 

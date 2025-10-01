@@ -21,11 +21,12 @@ The container can be configured, using the following environment-variables:
 
 | Var | Description | Values |Default  |
 |-----|-------------|---|----------|
-| KEY_TYPE_TO_GENERATE | Type of the key to be generated. RSA is only supported for did:jwk | "EC" or "RSA" | "EC" |
+| KEY_TYPE_TO_GENERATE | Type of the key to be generated. RSA is only supported for did:jwk | "EC", "ED-25519" or "RSA" | "EC" |
 | STORE_PASS | Password to be used for the keystore | string | "myPassword" |
 | KEY_ALIAS | Alias for the key inside the keystore | string | "myAlias" | 
 | OUTPUT_FORMAT | Output format for the did result file. | "json" or "env" | "json" |
 | DID_TYPE | Type of the did to generate. | "key" or "jwk" | "key" |
+| KEY_TYPE | Type of the key provided. | "P-256", "P-384" or "ED-25519" | "P-256" |
 | OUTPUT_FILE | File to write the did, format depends on the requested format. Will not write the file if empty. | string | "/cert/did.json" |
 | COUNTRY | Country to be set for the created certificate. | string | "DE" | 
 | STATE | State to be set for the created certificate. | string | "Saxony" | 
@@ -96,7 +97,9 @@ The helper supports the following parameters:
 ```shell
 Usage of ./did-helper:
   -didType string
-        Type of the did to generate. did:key and did:jwk are supported. Default is did:key (default "key")
+        Type of the did to generate. did:key and did:jwk are supported. (default "key")
+  -keyType
+        Type of the did-key to be created. Supported ED-25519, P-256, P-384. (default "P-256")
   -keystorePassword string
         Password for the keystore.
   -keystorePath string
