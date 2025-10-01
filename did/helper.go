@@ -2,6 +2,7 @@ package did
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/json"
@@ -14,7 +15,7 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-func GetDIDKeyFromECPKCS12(path, password string) (did string, err error) {
+func GetDIDKeyFromECPKCS12(path, password, keyType string) (did string, err error) {
 
 	bytes, err := os.ReadFile(path)
 
@@ -29,14 +30,48 @@ func GetDIDKeyFromECPKCS12(path, password string) (did string, err error) {
 		return did, err
 	}
 
+	switch keyType {
+	case "P-256":
+		fallthrough
+	case "P-384":
+		return getECDID(path, keyType, privateKey)
+	case "ED-25519":
+		return getED25519DID(path, keyType, privateKey)
+	default:
+		return did, errors.ErrUnsupported
+	}
+}
+
+func getECDID(path, keyType string, privateKey interface{}) (did string, err error) {
 	ecKey, ok := privateKey.(*ecdsa.PrivateKey)
 	if !ok {
 		zap.L().Sugar().Warnf("Keystore %s does not contain a valid EC Private Key.", path)
 		return did, errors.New("no_ec_private_key")
 	}
-	keyFromDid, _ := fingerprint.CreateDIDKeyByCode(fingerprint.P256PubKeyMultiCodec, elliptic.MarshalCompressed(ecKey.Curve, ecKey.PublicKey.X, ecKey.PublicKey.Y))
+
+	var code uint64
+
+	switch keyType {
+	case "P-256":
+		code = fingerprint.P256PubKeyMultiCodec
+	case "P-384":
+		code = fingerprint.P384PubKeyMultiCodec
+	}
+	keyFromDid, _ := fingerprint.CreateDIDKeyByCode(code, elliptic.MarshalCompressed(ecKey.Curve, ecKey.PublicKey.X, ecKey.PublicKey.Y))
 	zap.L().Sugar().Infof("Created did %s", keyFromDid)
 	return keyFromDid, err
+
+}
+func getED25519DID(path, keyType string, privateKey interface{}) (did string, err error) {
+	edPrivateKey, ok := privateKey.(ed25519.PrivateKey)
+	if !ok {
+		zap.L().Sugar().Warnf("Keystore %s does not contain a valid ED.25519 Private Key.", path)
+		return did, errors.New("no_ed_private_key")
+	}
+	pubBytes := edPrivateKey.Public().(ed25519.PublicKey)
+	keyFromDid, _ := fingerprint.CreateDIDKeyByCode(fingerprint.ED25519PubKeyMultiCodec, pubBytes)
+	zap.L().Sugar().Infof("Created did %s", keyFromDid)
+	return keyFromDid, nil
 }
 
 func GetDIDJWKFromKey(path, password string) (did string, err error) {
