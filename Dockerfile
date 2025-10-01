@@ -10,6 +10,7 @@ FROM ubuntu
 
 ENV KEY_TYPE_TO_GENERATE="EC"
 
+
 ENV COUNTRY="DE"
 ENV STATE="Saxony"
 ENV LOCALITY="Dresden"
@@ -17,6 +18,7 @@ ENV ORGANIZATION="M&P Operations Inc."
 ENV COMMON_NAME="www.mp-operations.org"
 ENV STORE_PASS="myPassword"
 ENV KEY_ALIAS="myAlias"
+ENV KEY_TYPE="P-256"
 ENV OUTPUT_FORMAT="json"
 ENV DID_TYPE="key"
 ENV OUTPUT_FILE="/cert/did.json"
