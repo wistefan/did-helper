@@ -7,7 +7,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/trustbloc/kms-go/doc/util/fingerprint"
@@ -111,4 +113,23 @@ func GetDIDJWKFromKey(path, password string) (did string, err error) {
 	encoded := base64.RawStdEncoding.EncodeToString(jsonKey)
 
 	return "did:jwk:" + encoded, err
+}
+
+func GetDIDWeb(hostUrl string) (did string, err error) {
+
+	if hostUrl == "" {
+		return did, errors.New("`hostUrl` parameter cannot be null when did type is `web`")
+	}
+
+	webUrl, err := url.Parse(hostUrl)
+	if err != nil {
+		zap.L().Sugar().Errorf("'%s' is not a valid url")
+		return did, err
+	}
+
+	did = "did:web:" + webUrl.Host
+	if webUrl.Path != "/" {
+		did = did + strings.ReplaceAll(webUrl.Path, "/", ":")
+	}
+	return did, err
 }

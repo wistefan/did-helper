@@ -42,4 +42,4 @@ openssl pkcs12 -export -inkey private-key.pem -in cert.pem -out cert.pfx -name $
 
 
 cd /temp
-/did-helper/did-helper -keystorePath /cert/cert.pfx -keystorePassword ${STORE_PASS} -outputFile ${OUTPUT_FILE} -outputFormat ${OUTPUT_FORMAT} -didType ${DID_TYPE} -keyType ${KEY_TYPE}
+/did-helper/did-helper -keystorePath /cert/cert.pfx -keystorePassword ${STORE_PASS} -outputFile ${OUTPUT_FILE} -outputFormat ${OUTPUT_FORMAT} -didType ${DID_TYPE} -keyType ${KEY_TYPE} -hostUrl ${HOST_URL}

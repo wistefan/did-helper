@@ -2,13 +2,13 @@
 
 Small tool to generate [Decentralized Identifiers](https://www.w3.org/TR/did-1.0/), following the [did:key](https://w3c-ccg.github.io/did-key-spec/) or [did:jwk](https://github.com/quartzjer/did-jwk/blob/main/spec.md) specs.
 
-## Usage 
+## Usage
 
 The tool is provided as a plain executable or as container.
 
 ### Container
 
-The container provides the capabilities to generate key material(either RSA or EC). 
+The container provides the capabilities to generate key material(either RSA or EC).
 
 ```shell
     docker run -v $(pwd)/cert:/cert quay.io/wi_stefan/did-helper
@@ -23,16 +23,17 @@ The container can be configured, using the following environment-variables:
 |-----|-------------|---|----------|
 | KEY_TYPE_TO_GENERATE | Type of the key to be generated. RSA is only supported for did:jwk | "EC", "ED-25519" or "RSA" | "EC" |
 | STORE_PASS | Password to be used for the keystore | string | "myPassword" |
-| KEY_ALIAS | Alias for the key inside the keystore | string | "myAlias" | 
+| KEY_ALIAS | Alias for the key inside the keystore | string | "myAlias" |
 | OUTPUT_FORMAT | Output format for the did result file. | "json" or "env" | "json" |
-| DID_TYPE | Type of the did to generate. | "key" or "jwk" | "key" |
+| DID_TYPE | Type of the did to generate. | "key", "jwk" or "web" | "key" |
 | KEY_TYPE | Type of the key provided. | "P-256", "P-384" or "ED-25519" | "P-256" |
 | OUTPUT_FILE | File to write the did, format depends on the requested format. Will not write the file if empty. | string | "/cert/did.json" |
-| COUNTRY | Country to be set for the created certificate. | string | "DE" | 
-| STATE | State to be set for the created certificate. | string | "Saxony" | 
-| LOCALITY | Locality to be set for the created certificate. | string | "Dresden" | 
-| ORGANIZATION | Organization to be set for the created certificate. | string | "M&P Operations Inc." | 
-| COMMON_NAME | Common name to be set for the created certificate. | string | "www.mp-operations.org" | 
+| HOST_URL | Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json). Requiredfor did:web | |
+| COUNTRY | Country to be set for the created certificate. | string | "DE" |
+| STATE | State to be set for the created certificate. | string | "Saxony" |
+| LOCALITY | Locality to be set for the created certificate. | string | "Dresden" |
+| ORGANIZATION | Organization to be set for the created certificate. | string | "M&P Operations Inc." |
+| COMMON_NAME | Common name to be set for the created certificate. | string | "www.mp-operations.org" |
 
 ### Executable
 
@@ -78,7 +79,7 @@ openssl genrsa -out private-key.pem 4096
 # extract the corresponding public key
 openssl rsa -in private-key.pem -pubout -out public-key.pem
 
-# create certficate, signed with the key 
+# create certficate, signed with the key
 openssl req -new -x509 -key private-key.pem -out cert.pem -days 360
 
 # export it to a keystore
@@ -92,12 +93,12 @@ keytool -v -keystore cert.pfx -list -alias the-alias
 
 #### Config
 
-The helper supports the following parameters: 
+The helper supports the following parameters:
 
 ```shell
 Usage of ./did-helper:
   -didType string
-        Type of the did to generate. did:key and did:jwk are supported. (default "key")
+        Type of the did to generate. did:key, did:jwk and did:web are supported. (default "key")
   -keyType
         Type of the did-key to be created. Supported ED-25519, P-256, P-384. (default "P-256")
   -keystorePassword string
@@ -108,4 +109,6 @@ Usage of ./did-helper:
         File to write the did, format depends on the requested format. Will not write the file if empty.
   -outputFormat string
         Output format for the did result file. Can be json or env. (default "json")
+  -hostUrl
+        Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json)"
 ```
