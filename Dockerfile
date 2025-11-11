@@ -1,12 +1,13 @@
-FROM golang:1.23-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
 
 
 WORKDIR /go/src/app
-COPY ./ ./
-RUN go get -d -v ./...
-RUN go build -v .
+COPY . .
 
-FROM ubuntu
+RUN go mod download
+RUN GOOS=linux GOARCH=$(go env GOARCH) go build -o did-helper .
+
+FROM --platform=$BUILDPLATFORM ubuntu
 
 ENV KEY_TYPE_TO_GENERATE="EC"
 
