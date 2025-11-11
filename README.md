@@ -24,11 +24,12 @@ The container can be configured, using the following environment-variables:
 | KEY_TYPE_TO_GENERATE | Type of the key to be generated. RSA is only supported for did:jwk | "EC", "ED-25519" or "RSA" | "EC" |
 | STORE_PASS | Password to be used for the keystore | string | "myPassword" |
 | KEY_ALIAS | Alias for the key inside the keystore | string | "myAlias" |
-| OUTPUT_FORMAT | Output format for the did result file. | "json" or "env" | "json" |
+| OUTPUT_FORMAT | Output format for the did result file. | "json", "env", "json_jwk" | "json" |
 | DID_TYPE | Type of the did to generate. | "key", "jwk" or "web" | "key" |
 | KEY_TYPE | Type of the key provided. | "P-256", "P-384" or "ED-25519" | "P-256" |
 | OUTPUT_FILE | File to write the did, format depends on the requested format. Will not write the file if empty. | string | "/cert/did.json" |
-| HOST_URL | Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json). Requiredfor did:web | |
+| HOST_URL | Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json). Required for did:web | |
+| CERT_URL | URL to retrieve the public certificate | string | `HOST_URL` + `/.well-known/tls.crt`
 | COUNTRY | Country to be set for the created certificate. | string | "DE" |
 | STATE | State to be set for the created certificate. | string | "Saxony" |
 | LOCALITY | Locality to be set for the created certificate. | string | "Dresden" |

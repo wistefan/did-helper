@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/wistefan/did-helper/did"
 	"go.uber.org/zap"
@@ -22,15 +23,17 @@ func main() {
 	var didType string
 	var keyType string
 	var hostUrl string
+	var fileContent []byte
+	var certUrl string
 
 	flag.StringVar(&path, "keystorePath", "", "Path to the keystore to be read.")
 	flag.StringVar(&password, "keystorePassword", "", "Password for the keystore.")
-	flag.StringVar(&outputFormat, "outputFormat", "json", "Output format for the did result file. Can be json or env.")
+	flag.StringVar(&outputFormat, "outputFormat", "json", "Output format for the did result file. Can be json, env or json_jwk.")
 	flag.StringVar(&outputFile, "outputFile", "", "File to write the did, format depends on the requested format. Will not write the file if empty.")
 	flag.StringVar(&didType, "didType", "key", "Type of the did to generate. did:key and did:jwk are supported.")
 	flag.StringVar(&keyType, "keyType", "P-256", "Type of the did-key to be created. Supported ED-25519, P-256, P-384.")
 	flag.StringVar(&hostUrl, "hostUrl", "", "Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json)")
-
+	flag.StringVar(&certUrl, "certUrl", "", "URL to retrieve the public certificate. Default is 'hostUrl' + /.well-known/tls.crt")
 	flag.Parse()
 
 	zap.L().Sugar().Infof("Path to the keystore: %s", path, "Password to be used: %s", password, "Output file: %s", outputFile)
@@ -55,26 +58,42 @@ func main() {
 		fmt.Println("Did key is: ", resultingDid)
 	}
 
-	if outputFile != "" && outputFormat == "json" {
-		didJson := Did{Context: []string{"https://www.w3.org/ns/did/v1"}, Id: resultingDid}
-		jsonFileContent, err := json.Marshal(didJson)
+	switch outputFormat {
+	case "json":
+		didJson := did.Did{IssuerDid: []string{"https://www.w3.org/ns/did/v1"}, Id: resultingDid}
+		fileContent, err = json.Marshal(didJson)
 		if err != nil {
 			zap.L().Sugar().Warnf("Was not able to marshal the did-json. Err: %s", err)
+			return
 		}
-		err = os.WriteFile(outputFile, jsonFileContent, 0644)
-		if err != nil {
-			zap.L().Sugar().Warnf("Was not able to write the did-json to %s. Err: %s", outputFile, err)
+	case "env":
+		fileContent = ([]byte("DID=" + resultingDid))
+	case "json_jwk":
+		if certUrl == "" {
+			certUrl = strings.Replace(hostUrl+"/.well-known/tls.crt", "//", "/", 1)
 		}
-	} else if outputFile != "" && outputFormat == "env" {
-		envContent := "DID=" + resultingDid
-		err = os.WriteFile(outputFile, []byte(envContent), 0644)
+		keySet, err := did.GetJWKFromPKCS12(path, password, certUrl)
 		if err != nil {
-			zap.L().Sugar().Warnf("Was not able to write the did-env to %s. Err: %s", outputFile, err)
+			zap.L().Sugar().Warnf("Error generating keyset. Err: %s", err)
+			return
+		}
+		verificationMethod := did.VerificationMethod{Id: resultingDid, Type: "JsonWebKey2020", Controller: resultingDid, PublicKeyJwk: keySet}
+		didJson := did.Did{IssuerDid: []string{"https://www.w3.org/ns/did/v1"}, Id: resultingDid, VerificationMethod: []did.VerificationMethod{verificationMethod}}
+		fileContent, err = json.MarshalIndent(didJson, "", "  ")
+		if err != nil {
+			zap.L().Sugar().Warnf("Error printing keyset")
+			return
 		}
 	}
-}
+	if outputFile != "" {
 
-type Did struct {
-	Context []string `json:"issuerDid,omitempty"`
-	Id      string   `json:"id"`
+		err = os.WriteFile(outputFile, fileContent, 0644)
+		if err != nil {
+			zap.L().Sugar().Warnf("Was not able to write the did-json to %s. Err: %s", outputFile, err)
+			return
+		}
+	} else {
+		zap.L().Sugar().Infof("Result: %s", fileContent)
+	}
+
 }

@@ -1,9 +1,11 @@
 package did
 
 import (
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -19,14 +21,7 @@ import (
 
 func GetDIDKeyFromECPKCS12(path, password, keyType string) (did string, err error) {
 
-	bytes, err := os.ReadFile(path)
-
-	if err != nil {
-		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
-		return did, err
-	}
-
-	privateKey, _, err := pkcs12.Decode(bytes, password)
+	privateKey, _, err := getPrivateKeyFromKeyStore(path, password)
 	if err != nil {
 		zap.L().Sugar().Warnf("Was not able to decode the keystore %s", path, "error", err)
 		return did, err
@@ -76,24 +71,9 @@ func getED25519DID(path, keyType string, privateKey interface{}) (did string, er
 	return keyFromDid, nil
 }
 
-func GetDIDJWKFromKey(path, password string) (did string, err error) {
-	bytes, err := os.ReadFile(path)
+func GetDIDJWKFromKey(path string, password string) (did string, err error) {
 
-	if err != nil {
-		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
-		return did, err
-	}
-
-	privateKey, _, err := pkcs12.Decode(bytes, password)
-
-	if err != nil {
-		zap.L().Sugar().Fatalf("Was not able to read key. Err: %v", err)
-		return did, err
-
-	}
-
-	// Create a JWK from the key
-	jwkKey, err := jwk.Import(privateKey)
+	jwkKey, err := getKeySetFromKeyStore(path, password)
 	if err != nil {
 		zap.L().Sugar().Fatalf("failed to create JWK: %v", err)
 		return did, err
@@ -132,4 +112,54 @@ func GetDIDWeb(hostUrl string) (did string, err error) {
 		did = did + strings.ReplaceAll(webUrl.Path, "/", ":")
 	}
 	return did, err
+}
+
+func GetJWKFromPKCS12(path string, password string, certPath string) (jwkKey jwk.Key, err error) {
+
+	jwkKey, err = getKeySetFromKeyStore(path, password)
+	if err != nil {
+		zap.L().Sugar().Fatalf("failed to create JWK: %v", err)
+		return jwkKey, err
+	}
+	jwk.AssignKeyID(jwkKey, jwk.WithThumbprintHash(crypto.SHA256))
+	if certPath != "" {
+		jwkKey.Set(jwk.X509URLKey, certPath)
+	}
+
+	return
+}
+
+func getPrivateKeyFromKeyStore(path string, password string) (privateKey interface{}, cert *x509.Certificate, err error) {
+
+	bytes, err := os.ReadFile(path)
+
+	if err != nil {
+		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
+		return privateKey, cert, err
+	}
+
+	privateKey, cert, err = pkcs12.Decode(bytes, password)
+	if err != nil {
+		zap.L().Sugar().Warnf("Was not able to decode the keystore %s", path, "error", err)
+		return privateKey, cert, err
+	}
+	return
+}
+
+func getKeySetFromKeyStore(path string, password string) (jwkKey jwk.Key, err error) {
+
+	_, cert, err := getPrivateKeyFromKeyStore(path, password)
+
+	if err != nil {
+		zap.L().Sugar().Fatalf("Was not able to read key. Err: %v", err)
+		return jwkKey, err
+
+	}
+	jwkPrivkey, err := jwk.PublicKeyOf(cert.PublicKey)
+	if err != nil {
+		zap.L().Sugar().Fatalf("Unable to generate jwk")
+		return jwkKey, err
+	}
+	jwkKey, err = jwkPrivkey.PublicKey()
+	return
 }
