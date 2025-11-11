@@ -30,6 +30,8 @@ The container can be configured, using the following environment-variables:
 | OUTPUT_FILE | File to write the did, format depends on the requested format. Will not write the file if empty. | string | "/cert/did.json" |
 | HOST_URL | Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json). Required for did:web | |
 | CERT_URL | URL to retrieve the public certificate | string | `HOST_URL` + `/.well-known/tls.crt`
+| RUN_SERVER | Run a server with /did.json and /.well-known/tls.crt endpoints | false
+| SERVER_PORT | Server port | 8080
 | COUNTRY | Country to be set for the created certificate. | string | "DE" |
 | STATE | State to be set for the created certificate. | string | "Saxony" |
 | LOCALITY | Locality to be set for the created certificate. | string | "Dresden" |
@@ -111,5 +113,11 @@ Usage of ./did-helper:
   -outputFormat string
         Output format for the did result file. Can be json or env. (default "json")
   -hostUrl
-        Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json)"
+        Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json)
+  -certUrl
+        URL to retrieve the public certificate. Default is 'hostUrl' + /.well-known/. tls.crt
+  -server
+        Run a server with /did.json and /.well-known/tls.crt endpoints
+  -port
+        Server port. (default 8080)
 ```

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/wistefan/did-helper/did"
+	"github.com/wistefan/did-helper/did/server"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +26,8 @@ func main() {
 	var hostUrl string
 	var fileContent []byte
 	var certUrl string
+	var runServer bool
+	var serverPort int
 
 	flag.StringVar(&path, "keystorePath", "", "Path to the keystore to be read.")
 	flag.StringVar(&password, "keystorePassword", "", "Password for the keystore.")
@@ -34,9 +37,13 @@ func main() {
 	flag.StringVar(&keyType, "keyType", "P-256", "Type of the did-key to be created. Supported ED-25519, P-256, P-384.")
 	flag.StringVar(&hostUrl, "hostUrl", "", "Base URL where the DID document will be located, excluding 'did.json'. (e.g., https://example.com/alice for https://example.com/alice/did.json)")
 	flag.StringVar(&certUrl, "certUrl", "", "URL to retrieve the public certificate. Default is 'hostUrl' + /.well-known/tls.crt")
+	flag.BoolVar(&runServer, "server", true, "Run a server with /did.json and /.well-known/tls.crt endpoints")
+	flag.IntVar(&serverPort, "port", 8080, "Server port. Default 8080")
 	flag.Parse()
 
-	zap.L().Sugar().Infof("Path to the keystore: %s", path, "Password to be used: %s", password, "Output file: %s", outputFile)
+	if !runServer {
+		zap.L().Sugar().Infof("Path to the keystore: %s", path, "Password to be used: %s", password, "Output file: %s", outputFile)
+	}
 
 	var resultingDid string
 	var err error
@@ -70,7 +77,7 @@ func main() {
 		fileContent = ([]byte("DID=" + resultingDid))
 	case "json_jwk":
 		if certUrl == "" {
-			certUrl = strings.Replace(hostUrl+"/.well-known/tls.crt", "//", "/", 1)
+			certUrl = strings.TrimSuffix(hostUrl, "/") + "/.well-known/tls.crt"
 		}
 		keySet, err := did.GetJWKFromPKCS12(path, password, certUrl)
 		if err != nil {
@@ -92,8 +99,12 @@ func main() {
 			zap.L().Sugar().Warnf("Was not able to write the did-json to %s. Err: %s", outputFile, err)
 			return
 		}
+	} else if runServer {
+		// Error is detected genering the content
+		cert, _ := did.GetCert(path, password)
+		server := server.NewDidServer(string(fileContent), string(cert), serverPort)
+		server.Start()
 	} else {
-		zap.L().Sugar().Infof("Result: %s", fileContent)
+		fmt.Println("Output: ", string(fileContent))
 	}
-
 }

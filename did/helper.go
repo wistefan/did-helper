@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"net/url"
 	"os"
@@ -21,7 +22,7 @@ import (
 
 func GetDIDKeyFromECPKCS12(path, password, keyType string) (did string, err error) {
 
-	privateKey, _, err := getPrivateKeyFromKeyStore(path, password)
+	privateKey, _, err := getCertFromKeyStore(path, password)
 	if err != nil {
 		zap.L().Sugar().Warnf("Was not able to decode the keystore %s", path, "error", err)
 		return did, err
@@ -111,7 +112,7 @@ func GetDIDWeb(hostUrl string) (did string, err error) {
 	if webUrl.Path != "/" {
 		did = did + strings.ReplaceAll(webUrl.Path, "/", ":")
 	}
-	return did, err
+	return strings.TrimSuffix(did, ":"), err
 }
 
 func GetJWKFromPKCS12(path string, password string, certPath string) (jwkKey jwk.Key, err error) {
@@ -129,7 +130,7 @@ func GetJWKFromPKCS12(path string, password string, certPath string) (jwkKey jwk
 	return
 }
 
-func getPrivateKeyFromKeyStore(path string, password string) (privateKey interface{}, cert *x509.Certificate, err error) {
+func getCertFromKeyStore(path string, password string) (privateKey interface{}, cert *x509.Certificate, err error) {
 
 	bytes, err := os.ReadFile(path)
 
@@ -148,7 +149,7 @@ func getPrivateKeyFromKeyStore(path string, password string) (privateKey interfa
 
 func getKeySetFromKeyStore(path string, password string) (jwkKey jwk.Key, err error) {
 
-	_, cert, err := getPrivateKeyFromKeyStore(path, password)
+	_, cert, err := getCertFromKeyStore(path, password)
 
 	if err != nil {
 		zap.L().Sugar().Fatalf("Was not able to read key. Err: %v", err)
@@ -162,4 +163,19 @@ func getKeySetFromKeyStore(path string, password string) (jwkKey jwk.Key, err er
 	}
 	jwkKey, err = jwkPrivkey.PublicKey()
 	return
+}
+
+func GetCert(path string, password string) ([]byte, error) {
+
+	_, cert, err := getCertFromKeyStore(path, password)
+	if err != nil {
+		zap.L().Sugar().Fatalf("Was not able to read key. Err: %v", err)
+		return nil, err
+	}
+	pemBlock := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	}
+
+	return pem.EncodeToMemory(pemBlock), nil
 }
