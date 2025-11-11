@@ -1,6 +1,10 @@
 package did
 
-import "github.com/lestrrat-go/jwx/v3/jwk"
+import (
+	"crypto/x509"
+
+	"github.com/lestrrat-go/jwx/v3/jwk"
+)
 
 type Did struct {
 	Context            []string             `json:"@context,omitempty"`
@@ -14,4 +18,25 @@ type VerificationMethod struct {
 	Type         string  `json:"type"`
 	Controller   string  `json:"controller"`
 	PublicKeyJwk jwk.Key `json:"publicKeyJwk,omitempty"`
+}
+
+type Config struct {
+	KeystorePath     string
+	KeystorePassword string
+	CertPath         string
+	KeyPath          string
+	OutputFormat     string
+	OutputFile       string
+	DidType          string
+	KeyType          string
+	HostUrl          string
+	CertUrl          string
+	RunServer        bool
+	ServerPort       int
+	Certificates     Certificates
+}
+
+type Certificates struct {
+	PublicKey  *x509.Certificate
+	PrivateKey interface{}
 }
