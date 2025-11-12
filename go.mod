@@ -4,7 +4,12 @@ go 1.23.0
 
 toolchain go1.24.2
 
-require go.uber.org/zap v1.26.0
+require (
+	github.com/lestrrat-go/jwx/v3 v3.0.1
+	github.com/trustbloc/kms-go v1.1.0
+	go.uber.org/zap v1.26.0
+	software.sslmate.com/src/go-pkcs12 v0.4.0
+)
 
 require (
 	github.com/IBM/mathlib v0.0.3-0.20231011094432-44ee0eb539da // indirect
@@ -27,14 +32,8 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.1 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
-)
-
-require (
-	github.com/lestrrat-go/jwx/v3 v3.0.1
-	github.com/trustbloc/kms-go v1.1.0
-	go.uber.org/multierr v1.10.0 // indirect
-	software.sslmate.com/src/go-pkcs12 v0.4.0
 )
