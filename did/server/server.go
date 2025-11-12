@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,7 +21,7 @@ type DidServer struct {
 	Logger         *zap.Logger
 }
 
-func NewDidServer(didJSON string, tlsCRT string, port int) *DidServer {
+func NewDidServer(didJSON string, tlsCRT string, port int, basepath string) *DidServer {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Failed to initialize Zap logger: %v", err)
@@ -30,10 +31,10 @@ func NewDidServer(didJSON string, tlsCRT string, port int) *DidServer {
 		TlsCRTContent:  tlsCRT,
 		Logger:         logger,
 	}
-
+	basepath = strings.TrimSuffix(basepath, "/")
 	mux := http.NewServeMux()
-	mux.HandleFunc("/did.json", s.handleDidJSON)
-	mux.HandleFunc("/.well-known/tls.crt", s.handleTlsCRT)
+	mux.HandleFunc(basepath+"/did.json", s.handleDidJSON)
+	mux.HandleFunc(basepath+"/.well-known/tls.crt", s.handleTlsCRT)
 
 	s.Server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),

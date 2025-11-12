@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -79,7 +80,7 @@ func main() {
 			os.Exit(5)
 		}
 		verificationMethod := did.VerificationMethod{Id: resultingDid, Type: "JsonWebKey2020", Controller: resultingDid, PublicKeyJwk: keySet}
-		didJson := did.Did{IssuerDid: []string{"https://www.w3.org/ns/did/v1"}, Id: resultingDid, VerificationMethod: []did.VerificationMethod{verificationMethod}}
+		didJson := did.Did{Context: []string{"https://www.w3.org/ns/did/v1"}, Id: resultingDid, VerificationMethod: []did.VerificationMethod{verificationMethod}}
 		fileContent, err = json.MarshalIndent(didJson, "", "  ")
 		if err != nil {
 			zap.L().Sugar().Warnf("Error printing keyset")
@@ -96,7 +97,12 @@ func main() {
 	} else if cfg.RunServer {
 		// Error is detected genering the content
 		cert, _ := did.GetCert(cfg)
-		server := server.NewDidServer(string(fileContent), string(cert), cfg.ServerPort)
+		webUrl, err := url.Parse(cfg.HostUrl)
+		if err != nil {
+			zap.L().Sugar().Errorf("'%s' is not a valid url")
+			os.Exit(7)
+		}
+		server := server.NewDidServer(string(fileContent), string(cert), cfg.ServerPort, webUrl.Path)
 		server.Start()
 	} else {
 		fmt.Println("Output: ", string(fileContent))
