@@ -1,4 +1,4 @@
-package server
+package did
 
 import (
 	"context"

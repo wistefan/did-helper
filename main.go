@@ -8,8 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wistefan/did-helper/did"
-	"github.com/wistefan/did-helper/did/server"
+	"gitlab.seamware.com/seamware/did-helper/did"
 	"go.uber.org/zap"
 )
 
@@ -102,7 +101,7 @@ func main() {
 			zap.L().Sugar().Errorf("'%s' is not a valid url")
 			os.Exit(7)
 		}
-		server := server.NewDidServer(string(fileContent), string(cert), cfg.ServerPort, webUrl.Path)
+		server := did.NewDidServer(string(fileContent), string(cert), cfg.ServerPort, webUrl.Path)
 		server.Start()
 	} else {
 		fmt.Println("Output: ", string(fileContent))

@@ -1,4 +1,4 @@
-module github.com/wistefan/did-helper
+module gitlab.seamware.com/seamware/did-helper
 
 go 1.23.0
 
