@@ -2,7 +2,7 @@ FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build
 
 
 WORKDIR /go/src/app
-COPY . .
+COPY ./ ./
 
 RUN go mod download
 RUN GOOS=linux GOARCH=$(go env GOARCH) go build -o did-helper .
@@ -25,7 +25,7 @@ ENV DID_TYPE="key"
 ENV OUTPUT_FILE="/cert/did.json"
 
 
-RUN apk add --no-cache openssl wget
+RUN apk add --no-cache openssl wget bash
 
 RUN mkdir /cert
 RUN mkdir /did-helper
