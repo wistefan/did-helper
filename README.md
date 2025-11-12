@@ -1,6 +1,6 @@
 # DID Helper
 
-Small tool to generate [Decentralized Identifiers](https://www.w3.org/TR/did-1.0/), following the [did:key](https://w3c-ccg.github.io/did-key-spec/) or [did:jwk](https://github.com/quartzjer/did-jwk/blob/main/spec.md) specs.
+Small tool to generate [Decentralized Identifiers](https://www.w3.org/TR/did-1.0/), following the [did:key](https://w3c-ccg.github.io/did-key-spec/), [did:web](https://w3c-ccg.github.io/did-method-web/) or [did:jwk](https://github.com/quartzjer/did-jwk/blob/main/spec.md) specs.
 
 ## Usage
 
@@ -11,7 +11,7 @@ The tool is provided as a plain executable or as container.
 The container provides the capabilities to generate key material(either RSA or EC).
 
 ```shell
-    docker run -v $(pwd)/cert:/cert quay.io/wi_stefan/did-helper
+    docker run -v $(pwd)/cert:/cert mortega5/did-helper
 ```
 The mounted ```$(pwd)/cert``` volume will contain:
     * the key-material - cert.pem, cert.pfx, private-key.pem and public-key.pem
@@ -117,7 +117,7 @@ Usage of ./did-helper:
   -certUrl
         URL to retrieve the public certificate. Default is 'hostUrl' + /.well-known/. tls.crt
   -server
-        Run a server with /did.json and /.well-known/tls.crt endpoints
+        Run a server with /did.json and /.well-known/tls.crt endpoints under hostUrl path (e.g. hostUrl=https://test.com/did -> /did/did.json and /did/.well-known/tls.crt)
   -port
         Server port. (default 8080)
 ```
