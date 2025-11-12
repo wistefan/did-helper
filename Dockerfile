@@ -7,7 +7,7 @@ COPY . .
 RUN go mod download
 RUN GOOS=linux GOARCH=$(go env GOARCH) go build -o did-helper .
 
-FROM --platform=$BUILDPLATFORM ubuntu
+FROM --platform=$BUILDPLATFORM alpine:3.21
 
 ENV KEY_TYPE_TO_GENERATE="EC"
 
@@ -25,9 +25,7 @@ ENV DID_TYPE="key"
 ENV OUTPUT_FILE="/cert/did.json"
 
 
-RUN apt-get update
-RUN apt-get install openssl -yq
-RUN apt-get install wget -yq
+RUN apk add --no-cache openssl wget
 
 RUN mkdir /cert
 RUN mkdir /did-helper
