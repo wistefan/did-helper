@@ -130,7 +130,7 @@ func GetDIDWeb(hostUrl string) (did string, err error) {
 		return did, err
 	}
 
-	did = "did:web:" + webUrl.Host
+	did = "did:web:" + webUrl.Hostname()
 	if webUrl.Path != "/" {
 		did = did + strings.ReplaceAll(webUrl.Path, "/", ":")
 	}
