@@ -231,5 +231,11 @@ func loadPrivateKey(path string) (interface{}, error) {
 		return privateKey, nil
 	}
 
+	privateKey, err = x509.ParseECPrivateKey(block.Bytes)
+
+	if err == nil {
+		return privateKey, nil
+	}
+
 	return nil, fmt.Errorf("unsupported private key format (not PKCS#8 or PKCS#1)")
 }
