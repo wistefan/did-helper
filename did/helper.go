@@ -1,13 +1,19 @@
 package did
 
 import (
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/trustbloc/kms-go/doc/util/fingerprint"
@@ -15,37 +21,51 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-func GetDIDKeyFromECPKCS12(path, password, keyType string) (did string, err error) {
+func LoadCertificates(config *Config) (err error) {
 
-	bytes, err := os.ReadFile(path)
-
-	if err != nil {
-		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
-		return did, err
+	if config.KeyPath != "" || config.CertPath != "" {
+		if config.KeyPath != "" {
+			config.Certificates.PrivateKey, err = loadPrivateKey(config.KeyPath)
+			if err != nil {
+				zap.L().Sugar().Warnf("Was not able to decode KeyCertPath %s", config.KeyPath, "error", err)
+				return err
+			}
+		}
+		if config.CertPath != "" {
+			config.Certificates.PublicKey, err = loadCertificate(config.CertPath)
+			if err != nil {
+				zap.L().Sugar().Warnf("Was not able to decode CertPath %s", config.KeyPath, "error", err)
+				return err
+			}
+		}
+	} else {
+		config.Certificates.PrivateKey, config.Certificates.PublicKey, err = getCertFromKeyStore(config.KeystorePath, config.KeystorePassword)
+		if err != nil {
+			zap.L().Sugar().Warnf("Was not able to decode the keystore %s", config.KeystorePath, "error", err)
+			return err
+		}
 	}
+	return nil
+}
 
-	privateKey, _, err := pkcs12.Decode(bytes, password)
-	if err != nil {
-		zap.L().Sugar().Warnf("Was not able to decode the keystore %s", path, "error", err)
-		return did, err
-	}
+func GetDIDKey(config Config) (did string, err error) {
 
-	switch keyType {
+	switch config.KeyType {
 	case "P-256":
 		fallthrough
 	case "P-384":
-		return getECDID(path, keyType, privateKey)
+		return getECDID(config.KeyType, config.Certificates.PrivateKey)
 	case "ED-25519":
-		return getED25519DID(path, keyType, privateKey)
+		return getED25519DID(config.Certificates.PrivateKey)
 	default:
 		return did, errors.ErrUnsupported
 	}
 }
 
-func getECDID(path, keyType string, privateKey interface{}) (did string, err error) {
+func getECDID(keyType string, privateKey interface{}) (did string, err error) {
 	ecKey, ok := privateKey.(*ecdsa.PrivateKey)
 	if !ok {
-		zap.L().Sugar().Warnf("Keystore %s does not contain a valid EC Private Key.", path)
+		zap.L().Sugar().Warnf("Unable to read a valid EC Private Key.")
 		return did, errors.New("no_ec_private_key")
 	}
 
@@ -62,10 +82,10 @@ func getECDID(path, keyType string, privateKey interface{}) (did string, err err
 	return keyFromDid, err
 
 }
-func getED25519DID(path, keyType string, privateKey interface{}) (did string, err error) {
+func getED25519DID(privateKey any) (did string, err error) {
 	edPrivateKey, ok := privateKey.(ed25519.PrivateKey)
 	if !ok {
-		zap.L().Sugar().Warnf("Keystore %s does not contain a valid ED.25519 Private Key.", path)
+		zap.L().Sugar().Warnf("Unable to read a valid ED.25519 Private Key.")
 		return did, errors.New("no_ed_private_key")
 	}
 	pubBytes := edPrivateKey.Public().(ed25519.PublicKey)
@@ -74,24 +94,9 @@ func getED25519DID(path, keyType string, privateKey interface{}) (did string, er
 	return keyFromDid, nil
 }
 
-func GetDIDJWKFromKey(path, password string) (did string, err error) {
-	bytes, err := os.ReadFile(path)
+func GetDIDJWKFromKey(config Config) (did string, err error) {
 
-	if err != nil {
-		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
-		return did, err
-	}
-
-	privateKey, _, err := pkcs12.Decode(bytes, password)
-
-	if err != nil {
-		zap.L().Sugar().Fatalf("Was not able to read key. Err: %v", err)
-		return did, err
-
-	}
-
-	// Create a JWK from the key
-	jwkKey, err := jwk.Import(privateKey)
+	jwkKey, err := generateJwk(config.Certificates.PublicKey)
 	if err != nil {
 		zap.L().Sugar().Fatalf("failed to create JWK: %v", err)
 		return did, err
@@ -111,4 +116,126 @@ func GetDIDJWKFromKey(path, password string) (did string, err error) {
 	encoded := base64.RawStdEncoding.EncodeToString(jsonKey)
 
 	return "did:jwk:" + encoded, err
+}
+
+func GetDIDWeb(hostUrl string) (did string, err error) {
+
+	if hostUrl == "" {
+		return did, errors.New("`hostUrl` parameter cannot be null when did type is `web`")
+	}
+
+	webUrl, err := url.Parse(hostUrl)
+	if err != nil {
+		zap.L().Sugar().Errorf("'%s' is not a valid url")
+		return did, err
+	}
+
+	did = "did:web:" + webUrl.Hostname()
+	if webUrl.Path != "/" {
+		did = did + strings.ReplaceAll(webUrl.Path, "/", ":")
+	}
+	return strings.TrimSuffix(did, ":"), err
+}
+
+func GenerateJWK(config Config) (jwkKey jwk.Key, err error) {
+
+	jwkKey, err = generateJwk(config.Certificates.PublicKey)
+	if err != nil {
+		zap.L().Sugar().Fatalf("failed to create JWK: %v", err)
+		return jwkKey, err
+	}
+	jwk.AssignKeyID(jwkKey, jwk.WithThumbprintHash(crypto.SHA256))
+	if config.CertUrl != "" {
+		jwkKey.Set(jwk.X509URLKey, config.CertUrl)
+	}
+
+	return
+}
+
+func GetCert(config Config) (certRaw []byte, err error) {
+
+	pemBlock := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: config.Certificates.PublicKey.Raw,
+	}
+
+	return pem.EncodeToMemory(pemBlock), nil
+}
+
+func generateJwk(cert *x509.Certificate) (jwkKey jwk.Key, err error) {
+	jwkPrivkey, err := jwk.PublicKeyOf(cert.PublicKey)
+	if err != nil {
+		zap.L().Sugar().Fatalf("Unable to generate jwk")
+		return jwkKey, err
+	}
+	jwkKey, err = jwkPrivkey.PublicKey()
+	return
+}
+
+func getCertFromKeyStore(path string, password string) (privateKey interface{}, cert *x509.Certificate, err error) {
+
+	bytes, err := os.ReadFile(path)
+
+	if err != nil {
+		zap.L().Sugar().Warnf("Was not able to read the file %s", path, "error", err)
+		return privateKey, cert, err
+	}
+
+	privateKey, cert, err = pkcs12.Decode(bytes, password)
+	if err != nil {
+		zap.L().Sugar().Warnf("Was not able to decode the keystore %s", path, "error", err)
+		return privateKey, cert, err
+	}
+	return
+}
+
+func loadCertificate(path string) (*x509.Certificate, error) {
+	certBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(certBytes)
+	if block == nil {
+		return nil, fmt.Errorf("failed to find PEM block in certificate file")
+	}
+	if block.Type != "CERTIFICATE" {
+		return nil, fmt.Errorf("unexpected PEM block type: %s", block.Type)
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse DER certificate: %w", err)
+	}
+	return cert, nil
+}
+
+func loadPrivateKey(path string) (interface{}, error) {
+	keyBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(keyBytes)
+	if block == nil {
+		return nil, fmt.Errorf("failed to find PEM block in private key file")
+	}
+
+	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err == nil {
+		return privateKey, nil
+	}
+
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err == nil {
+		return privateKey, nil
+	}
+
+	privateKey, err = x509.ParseECPrivateKey(block.Bytes)
+
+	if err == nil {
+		return privateKey, nil
+	}
+
+	return nil, fmt.Errorf("unsupported private key format (not PKCS#8 or PKCS#1)")
 }
