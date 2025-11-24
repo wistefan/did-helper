@@ -22,6 +22,8 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1-0.20221117193127-916db76e8214 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
+	github.com/iancoleman/strcase v0.3.0 // indirect
+	github.com/itzg/go-flagsfiller v1.17.0 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -30,6 +32,7 @@ require (
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/trustbloc/bbs-signature-go v1.0.1 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

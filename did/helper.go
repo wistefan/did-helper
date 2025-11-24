@@ -18,19 +18,12 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	PEM_SOURCE      = "pem source"
-	KEYSTORE_SOURCE = "keystore"
-)
-
 func LoadCertificates(config *Config) (err error) {
 
 	var source string
 	if config.KeyPath != "" || config.CertPath != "" {
-		source = PEM_SOURCE
 		err = LoadCertsConfigFromPem(config)
 	} else {
-		source = KEYSTORE_SOURCE
 		config.Certificates.PrivateKey, config.Certificates.PublicKey, err = GetCertFromKeyStore(config.KeystorePath, config.KeystorePassword)
 	}
 

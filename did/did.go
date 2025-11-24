@@ -21,19 +21,19 @@ type VerificationMethod struct {
 }
 
 type Config struct {
-	KeystorePath     string
-	KeystorePassword string
-	CertPath         string
-	KeyPath          string
-	OutputFormat     string
-	OutputFile       string
-	DidType          string
-	KeyType          string
-	HostUrl          string
-	CertUrl          string
-	RunServer        bool
-	ServerPort       int
-	Certificates     Certificates
+	KeystorePath     string       `flag:"keystorePath" default:"" usage:"Path to the keystore to be read."`
+	KeystorePassword string       `flag:"keystorePassword" default:"" usage:"Password for the keystore."`
+	CertPath         string       `flag:"certPath" default:"" usage:"Path to the PEM certificate."`
+	KeyPath          string       `flag:"keyPath" default:"" usage:"Path to the key PEM certificate."`
+	OutputFormat     string       `flag:"outputFormat" default:"json" usage:"Output format for the DID result file. Can be json, env or json_jwk."`
+	OutputFile       string       `flag:"outputFile" default:"" usage:"File to write the DID; will not write if empty."`
+	DidType          string       `flag:"didType" default:"key" usage:"Type of the DID to generate. did:key and did:jwk are supported."`
+	KeyType          string       `flag:"keyType" default:"P-256" usage:"Type of the DID key to be created. Supported: ED-25519, P-256, P-384."`
+	HostUrl          string       `flag:"hostUrl" default:"" usage:"Base URL where the DID document will be located, excluding 'did.json'."`
+	CertUrl          string       `flag:"certUrl" default:"" usage:"URL to retrieve the public certificate. Defaults to 'hostUrl' + /.well-known/tls.crt"`
+	RunServer        bool         `flag:"server" default:"false" usage:"Run a server with /did.json and /.well-known/tls.crt endpoints."`
+	ServerPort       int          `flag:"port" default:"8080" usage:"Server port. Default 8080."`
+	Certificates     Certificates `flag:""`
 }
 
 type Certificates struct {
