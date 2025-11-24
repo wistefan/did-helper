@@ -2,10 +2,14 @@ FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build
 
 
 WORKDIR /go/src/app
-COPY ./ ./
+
+COPY go.mod go.sum ./
 
 RUN go mod download
-RUN GOOS=linux GOARCH=$(go env GOARCH) go build -o did-helper .
+
+COPY . .
+
+RUN GOOS=linux GOARCH=$TARGETARCH go build -o did-helper .
 
 FROM --platform=$BUILDPLATFORM alpine:3.21
 
