@@ -33,8 +33,17 @@ func NewDidServer(didJSON string, tlsCRT string, port int, basepath string) *Did
 	}
 	basepath = strings.TrimSuffix(basepath, "/")
 	mux := http.NewServeMux()
-	mux.HandleFunc(basepath+"/did.json", s.handleDidJSON)
-	mux.HandleFunc(basepath+"/.well-known/tls.crt", s.handleTlsCRT)
+
+	var didPath string
+	var certPath = basepath + "/.well-known/tls.crt"
+	if basepath == "" {
+		didPath = "/.well-known/did.json"
+	} else {
+		didPath = basepath + "/did.json"
+	}
+
+	mux.HandleFunc(didPath, s.handleDidJSON)
+	mux.HandleFunc(certPath, s.handleTlsCRT)
 
 	s.Server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
