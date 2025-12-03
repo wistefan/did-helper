@@ -1,12 +1,20 @@
-FROM golang:1.23-alpine AS build
+FROM --platform=${BUILDPLATFORM} golang:1.25-alpine AS build
 
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /go/src/app
-COPY ./ ./
-RUN go get -d -v ./...
-RUN go build -v .
 
-FROM ubuntu
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build  -ldflags="-w -s" -o did-helper .
+
+FROM --platform=${BUILDPLATFORM} alpine:3.21
 
 ENV KEY_TYPE_TO_GENERATE="EC"
 
@@ -23,10 +31,7 @@ ENV OUTPUT_FORMAT="json"
 ENV DID_TYPE="key"
 ENV OUTPUT_FILE="/cert/did.json"
 
-
-RUN apt-get update
-RUN apt-get install openssl -yq
-RUN apt-get install wget -yq
+RUN apk add --no-cache openssl wget bash
 
 RUN mkdir /cert
 RUN mkdir /did-helper
