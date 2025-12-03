@@ -8,7 +8,7 @@ The tool is provided as a plain executable or as container.
 
 ### Container
 
-The container provides the capabilities to generate key material(either RSA or EC).
+The container provides the capability to generate key material (either RSA or EC) if no KEYSTORE_PATH or CERT_URL is provided.
 
 ```shell
     docker run -v $(pwd)/cert:/cert mortega5/did-helper
@@ -37,6 +37,7 @@ The container can be configured, using the following environment-variables:
 | LOCALITY | Locality to be set for the created certificate. | string | "Dresden" |
 | ORGANIZATION | Organization to be set for the created certificate. | string | "M&P Operations Inc." |
 | COMMON_NAME | Common name to be set for the created certificate. | string | "www.mp-operations.org" |
+| KEYSTORE_PATH | Path to the keystore | string |
 
 ### Executable
 
