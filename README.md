@@ -11,7 +11,7 @@ The tool is provided as a plain executable or as container.
 The container provides the capability to generate key material (either RSA or EC) if no KEYSTORE_PATH or CERT_URL is provided.
 
 ```shell
-    docker run -v $(pwd)/cert:/cert mortega5/did-helper
+    docker run -v $(pwd)/cert:/cert quay.io/wi_stefan/did-helper
 ```
 The mounted ```$(pwd)/cert``` volume will contain:
     * the key-material - cert.pem, cert.pfx, private-key.pem and public-key.pem
